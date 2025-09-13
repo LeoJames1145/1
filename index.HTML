@@ -1,0 +1,134 @@
+<!doctype html>
+
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>登录 / 注册（移动端兼容）</title>
+  <style>
+    :root{--blue:#007bff}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;display:flex;flex-direction:column;min-height:100vh}/* 顶部栏 */
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #eee;background:#fff}
+.btn{font-size:16px;padding:10px 14px;border-radius:8px;border:2px solid transparent;display:inline-flex;align-items:center;gap:8px;cursor:pointer}
+.btn:active{transform:translateY(1px)}
+.btn-login{background:var(--blue);color:#fff}
+.btn-register{background:transparent;color:var(--blue);border-color:var(--blue)}
+
+/* 中央内容 */
+.main{flex:1;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center}
+h1{font-size:20px;margin:0 0 8px}
+p{margin:0;color:#555}
+
+/* 模态框 */
+.modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);z-index:40;padding:20px}
+.modal.show{display:flex}
+.modal-card{background:#fff;border-radius:12px;max-width:920px;width:100%;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.25)}
+.modal-header{display:flex;justify-content:flex-end;padding:8px}
+.modal-body{padding:12px}
+.close{background:transparent;border:0;font-size:20px;padding:6px 10px;cursor:pointer}
+video{width:100%;height:auto;display:block}
+
+/* 小屏优化 */
+@media (max-width:420px){
+  .btn{font-size:15px;padding:10px 12px;border-radius:10px}
+  h1{font-size:18px}
+}
+
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <button class="btn btn-login" id="loginBtn">登录</button>
+    <button class="btn btn-register" id="registerBtn">注册</button>
+  </header>  <main class="main">
+    <div>
+      <h1>你好</h1>
+      <p>请登录或注册。</p>
+    </div>
+  </main>  <!-- 登录模态（示例） -->  <div class="modal" id="loginModal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <button class="close" data-close>&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="loginForm" style="display:flex;flex-direction:column;gap:10px;">
+          <input type="text" placeholder="用户名" required style="padding:10px;font-size:16px;border:1px solid #ddd;border-radius:8px">
+          <input type="password" placeholder="密码" required style="padding:10px;font-size:16px;border:1px solid #ddd;border-radius:8px">
+          <button type="submit" class="btn btn-login" style="width:100%;justify-content:center">登录</button>
+        </form>
+      </div>
+    </div>
+  </div>  <!-- 注册模态：播放视频 -->  <div class="modal" id="videoModal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <button class="close" data-close>&times;</button>
+      </div>
+      <div class="modal-body">
+        <!--
+          将下面视频的 src 替换为你准备好的视频文件路径。
+          示例：如果把视频文件命名为 "video.mp4" 并与此 HTML 放在同一目录，改为 src="video.mp4" 即可。
+          对于移动端，用户触发点击后播放通常能通过浏览器策略；若想自动静音播放可添加 muted 属性。
+        -->
+        <video id="regVideo" controls playsinline webkit-playsinline preload="auto">
+          <source src="video.mp4" type="1/video.mp4">
+          你的浏览器不支持 video 标签。
+        </video>
+      </div>
+    </div>
+  </div>  <script>
+    const loginBtn = document.getElementById('loginBtn');
+    const registerBtn = document.getElementById('registerBtn');
+    const loginModal = document.getElementById('loginModal');
+    const videoModal = document.getElementById('videoModal');
+    const videoEl = document.getElementById('regVideo');
+
+    function openModal(modal){
+      modal.classList.add('show');
+      modal.setAttribute('aria-hidden','false');
+      // 禁止背景滚动
+      document.body.style.overflow = 'hidden';
+    }
+    function closeModal(modal){
+      modal.classList.remove('show');
+      modal.setAttribute('aria-hidden','true');
+      document.body.style.overflow = '';
+    }
+
+    // 登录按钮 - 打开登录模态
+    loginBtn.addEventListener('click', ()=> openModal(loginModal));
+
+    // 注册按钮 - 打开视频模态并播放视频
+    registerBtn.addEventListener('click', ()=>{
+      openModal(videoModal);
+      // 尝试从用户准备好的路径播放（如果已设置 src），并在用户点击后播放确保通过移动端策略
+      try{ videoEl.currentTime = 0; videoEl.play().catch(()=>{/*浏览器策略阻止自动播放，但用户已点击注册，通常会允许*/}); }catch(e){console.warn(e)}
+    });
+
+    // 关闭按钮
+    document.querySelectorAll('[data-close]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const modal = btn.closest('.modal');
+        if(modal === videoModal){ videoEl.pause(); }
+        closeModal(modal);
+      })
+    });
+
+    // 点击遮罩关闭
+    document.querySelectorAll('.modal').forEach(modal=>{
+      modal.addEventListener('click', (e)=>{
+        if(e.target === modal){
+          if(modal === videoModal){ videoEl.pause(); }
+          closeModal(modal);
+        }
+      })
+    });
+
+    // 简单的登录表单提交处理（示例）
+    document.getElementById('loginForm').addEventListener('submit', (e)=>{
+      e.preventDefault();
+      alert('已提交登录（示例）。实际项目请替换为真实登录逻辑）。');
+      closeModal(loginModal);
+    });
+  </script></body>
+</html>
